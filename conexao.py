@@ -8,14 +8,16 @@ Notas = namedtuple('Notas', ['chave', 'string_xml', 'controle', 'isnStatus'])
 
 class Conexao:
     config = ("Driver={};"
-              "Server=COSMOS;"
+              "Server={};"
               "Database={};"
               "Trusted_Connection=Yes;")
 
-    def __init__(self) -> None:
+    def __init__(self, server, database) -> None:
         self.__driver = "{ODBC Driver 17 for Sql Server}"
-        self.__banco = 'dbnfe'
-        self.config_conf = self.config.format(self.driver, self.banco)
+        self.__server = server
+        self.__banco = database
+        self.config_conf = self.config.format(
+            self.driver, self.server, self.banco)
         self.url = quote_plus(self.config_conf)
 
     @property
@@ -26,14 +28,16 @@ class Conexao:
     def banco(self):
         return self.__banco
 
+    @property
+    def server(self):
+        return self.__server
+
     @banco.setter
     def banco(self, value: str):
-        if value.lower() == 'dbnfe' or value.lower() == 'dbnfeloja':
-            self.__banco = value
-            self.config_conf = self.config.format(self.driver, self.__banco)
-            self.url = quote_plus(self.config_conf)
-        else:
-            raise ValueError("[ERRO] Banco de dados não localizado !")
+        self.__banco = value
+        self.config_conf = self.config.format(
+            self.driver, self.server,  self.banco)
+        self.url = quote_plus(self.config_conf)
 
     def conectar(self):
         return create_engine("mssql+pyodbc:///?odbc_connect=%s" % self.url)
@@ -118,7 +122,7 @@ class ListaNotas:
 
 
 if __name__ == '__main__':
-    c = Conexao().conectar()
+    c = Conexao('servidor', 'banco').conectar()
 
     notas = ListaNotas.chave(
         chave='chave_de_acesso', conn=c)

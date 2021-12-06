@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 from dataxml import XmlNota
 
-conn = Conexao()
-conn.banco = 'dbnfeloja'
+conn = Conexao('servidor', 'banco')
 
 COLUNAS = ['cProd', 'cEAN', 'xProd', 'CFOP', 'uCom', 'qCom', 'vUnCom',
            'vDesc', 'vProd',
@@ -25,7 +24,7 @@ COL_TIPO = {'qCom': np.float64, 'vUnCom': np.float64,
             'Serie': np.int64, 'cnpjEmi': np.int64,
             'dhEmi': np.datetime64, 'Id': np.int64}
 
-c = ('ESTORNO-DEVOLUCAO-LOJA-CD', )
+c = ('controle_nota', )
 notas = ListaNotas.controle(
     conn.conectar(), *c)
 
