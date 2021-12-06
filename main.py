@@ -1,4 +1,3 @@
-from datetime import datetime
 from conexao import ListaNotas, Conexao
 import pandas as pd
 import numpy as np
