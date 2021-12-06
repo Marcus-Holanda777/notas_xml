@@ -1,0 +1,6 @@
+# arquivos do excel
+*.xlsx
+~$.*
+
+# pastas
+__pycache__/
