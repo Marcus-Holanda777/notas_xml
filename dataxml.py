@@ -1,5 +1,9 @@
 from typing import List
 from lxml import etree
+from collections import namedtuple
+from datetime import datetime
+
+Notas = namedtuple('Notas', ['chave', 'string_xml', 'controle', 'isnStatus'])
 
 
 class XmlNota:
@@ -59,3 +63,81 @@ class XmlNota:
                         linhas[element.tag] = element.text
 
             yield linhas.copy()
+
+
+class ListaNotas:
+    @staticmethod
+    def periodo(inicio: datetime, fim: datetime, conn):
+        select = f'''
+            select
+                     x1.codChaveAcesso as chave
+                    ,x1.dscXml as string_xml
+                    ,x1.controle1 as controle
+                    ,x1.isnStatus
+            from tbNfeXml x1
+            where x1.dthGravacao
+            between '{inicio.strftime('%Y-%m-%d')} 00:00:00' and  '{fim.strftime('%Y-%m-%d')} 23:59:59'
+            and x1.dscXml is not null
+            and x1.isnStatus != 3
+        '''
+
+        with conn.connect() as abrir:
+            rst = abrir.execute(
+                select
+            )
+
+            for row in map(Notas._make, rst):
+                yield row
+
+    @staticmethod
+    def chave(conn, *chave):
+        select = f'''
+            select
+                     x1.codChaveAcesso as chave
+                    ,x1.dscXml as string_xml
+                    ,x1.controle1 as controle
+                    ,x1.isnStatus
+            from tbNfeXml x1
+            where x1.codChaveAcesso in('{"','".join(chave)}')
+            and x1.dscXml is not null
+            and x1.isnStatus != 3
+        '''
+
+        with conn.connect() as abrir:
+            rst = abrir.execute(
+                select
+            )
+
+            for row in map(Notas._make, rst):
+                yield row
+
+    @staticmethod
+    def controle(conn, *controle, **dados):
+        comp_where = ''
+        if dados:
+            comp_where = f'''and x1.dthGravacao 
+            between '{dados['inicio'].strftime('%Y-%m-%d')} 00:00:00'
+            and '{dados['fim'].strftime('%Y-%m-%d')} 23:59:59' '''
+
+        select = f'''
+            select
+                     x1.codChaveAcesso as chave
+                    ,x1.dscXml as string_xml
+                    ,x1.controle1 as controle
+                    ,x1.isnStatus
+            from tbNfeXml x1
+            where x1.controle1 in('{"','".join(controle)}')
+            {comp_where}
+            and x1.dscXml is not null
+            and x1.isnStatus != 3
+        '''
+
+        print(select)
+
+        with conn.connect() as abrir:
+            rst = abrir.execute(
+                select
+            )
+
+            for row in map(Notas._make, rst):
+                yield row
