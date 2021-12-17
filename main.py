@@ -2,8 +2,9 @@ from conexao import ListaNotas, Conexao
 import pandas as pd
 import numpy as np
 from dataxml import XmlNota
+from datetime import datetime
 
-conn = Conexao('servidor', 'banco')
+conn = Conexao('cosmos', 'dbnfe')
 
 COLUNAS = ['cProd', 'cEAN', 'xProd', 'CFOP', 'uCom', 'qCom', 'vUnCom',
            'vDesc', 'vProd',
@@ -24,9 +25,9 @@ COL_TIPO = {'qCom': np.float64, 'vUnCom': np.float64,
             'Serie': np.int64, 'cnpjEmi': np.int64,
             'dhEmi': np.datetime64, 'Id': np.int64}
 
-c = ('controle_nota', )
+c = ('ESTORNO-INCINERACAO', )
 notas = ListaNotas.controle(
-    conn.conectar(), *c)
+    conn.conectar(), *c, inicio=datetime(2021, 11, 1), fim=datetime(2021, 11, 15))
 
 lista_df = []
 for df in notas:
@@ -36,6 +37,7 @@ for df in notas:
         lista_df.append(df)
     except Exception as e:
         print(df.chave, e)
+
         next
 
 df_comp = pd.concat(lista_df, ignore_index=True)

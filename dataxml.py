@@ -31,6 +31,12 @@ class XmlNota:
                 linhas['dhEmi'] = dt_emiss.text[0:10]
 
             linhas['chaveAcesso'] = self.root.find('infNFe').get('Id')[3:]
+
+            # Verificar se é nota de estorno
+            if self.nota.controle.lower().startswith('estorno'):
+                linhas['chaveEstorno'] = self.root.find(
+                    'infNFe/ide//refNFe').text
+
             linhas['nNF'] = self.root.find('infNFe/ide/nNF').text
             linhas['vNF'] = self.root.find('infNFe/total//vNF').text
             linhas['vICMS_nota'] = self.root.find('infNFe/total//vICMS').text
