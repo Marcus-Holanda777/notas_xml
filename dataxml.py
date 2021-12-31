@@ -1,13 +1,43 @@
+import collections
 from typing import List
 from lxml import etree
 from collections import namedtuple
 from datetime import datetime
+from dateutil.parser import parse
 
 Notas = namedtuple('Notas', ['chave', 'string_xml', 'controle', 'isnStatus'])
 
 
+class Conversao(collections.UserDict):
+    def __missing__(self, key):
+        return str
+
+
 class XmlNota:
-    def __init__(self, nota, colunas: List, ns="{http://www.portalfiscal.inf.br/nfe}") -> None:
+    COLUNAS = ['cProd', 'cEAN', 'xProd',
+               'CFOP', 'uCom', 'qCom', 'vUnCom',
+               'vDesc', 'vProd',
+               'nLote', 'qLote', 'dFab',
+               'dVal', 'vBC', 'pICMS',
+               'vICMS', 'pPIS', 'vPIS',
+               'pCOFINS', 'vCOFINS', 'orig']
+
+    # tipo de dados
+    COL_TIPO = Conversao({'qCom': float, 'vUnCom': float,
+                          'vDesc': float, 'vProd': float,
+                          'qLote': float, 'dFab': lambda x: parse(x),
+                          'dVal': lambda x: parse(x), 'ICMS_vBC': float,
+                          'pICMS': float,
+                          'PIS_vBC': float, 'COFINS_vBC': float,
+                          'vICMS': float, 'pPIS': float,
+                          'vPIS': float, 'pCOFINS': float,
+                          'vCOFINS': float,
+                          'vNF': float, 'nNF': int,
+                          'vICMS_nota': float,
+                          'Serie': int, 'cnpjEmi': int,
+                          'dhEmi': lambda x: parse(x), 'Id': int})
+
+    def __init__(self, nota, colunas: List = COLUNAS, ns="{http://www.portalfiscal.inf.br/nfe}") -> None:
         self.nota = nota
         self.ns = ns
         self.colunas = colunas
@@ -62,7 +92,7 @@ class XmlNota:
                     else:
                         linhas[element.tag] = element.text
 
-            yield linhas.copy()
+            yield {k: self.COL_TIPO[k](v) for k, v in linhas.items()}
 
 
 class ListaNotas:
@@ -115,7 +145,7 @@ class ListaNotas:
     def controle(conn, *controle, **dados):
         comp_where = ''
         if dados:
-            comp_where = f'''and x1.dthGravacao 
+            comp_where = f'''and x1.dthGravacao
             between '{dados['inicio'].strftime('%Y-%m-%d')} 00:00:00'
             and '{dados['fim'].strftime('%Y-%m-%d')} 23:59:59' '''
 
