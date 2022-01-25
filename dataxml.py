@@ -50,6 +50,34 @@ class XmlNota:
 
         return root
 
+    def valores(self):
+        linhas = dict()
+        linhas['isnStatus'] = self.nota.isnStatus
+        linhas['controle'] = self.nota.controle
+        linhas['cnpjEmi'] = self.root.find('infNFe/emit/CNPJ').text[8:12]
+        linhas['cnpjDest'] = self.root.find('infNFe/dest/CNPJ').text[8:12]
+        linhas['natOp'] = self.root.find('infNFe/ide/natOp').text
+
+        dt_emiss = self.root.find('infNFe/ide/dhEmi')
+        if dt_emiss is None:
+            linhas['dhEmi'] = self.root.find('infNFe/ide/dEmi').text[0:10]
+        else:
+            linhas['dhEmi'] = dt_emiss.text[0:10]
+
+        linhas['chaveAcesso'] = self.root.find('infNFe').get('Id')[3:]
+
+        # Verificar se é nota de estorno
+        if self.nota.controle.lower().startswith('estorno'):
+            linhas['chaveEstorno'] = self.root.find(
+                'infNFe/ide//refNFe').text
+
+        linhas['nNF'] = self.root.find('infNFe/ide/nNF').text
+        linhas['vNF'] = self.root.find('infNFe/total//vNF').text
+        linhas['vICMS_nota'] = self.root.find('infNFe/total//vICMS').text
+        linhas['Serie'] = self.root.find('infNFe/ide/serie').text
+
+        yield {k: self.COL_TIPO[k](v) for k, v in linhas.items()}
+
     def dados(self):
         for child in self.root.findall("infNFe/det"):
             linhas = dict()
@@ -161,8 +189,6 @@ class ListaNotas:
             and x1.dscXml is not null
             and x1.isnStatus != 3
         '''
-
-        print(select)
 
         with conn.connect() as abrir:
             rst = abrir.execute(
